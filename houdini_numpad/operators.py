@@ -50,12 +50,15 @@ class HOUDINI_NUMPAD_OT_editor(bpy.types.Operator):
         self._timer = wm.event_timer_add(0.016, window=context.window)
         wm.modal_handler_add(self)
         
-        # Add draw handler
+        # Add draw handler to view3d
         for area in context.screen.areas:
-            if area.type == 'PROPERTIES':
-                self._draw_handler = area.spaces[0].draw_handler_add(
-                    self._draw_numpad_ui, (context,), 'POST_PIXEL', 'RUNNING_MODAL'
-                )
+            if area.type == 'VIEW_3D':
+                for region in area.regions:
+                    if region.type == 'WINDOW':
+                        self._draw_handler = region.draw_handler_add(
+                            self._draw_numpad_ui, (context,), 'WINDOW', 'POST_VIEW'
+                        )
+                        break
                 break
         
         return {'RUNNING_MODAL'}
@@ -119,13 +122,19 @@ class HOUDINI_NUMPAD_OT_editor(bpy.types.Operator):
                     
                     for _ in range(count):
                         # Create a synthetic wheel event
-                        with context.temp_override(
-                            window=context.window,
-                            area=context.area,
-                            region=context.region
-                        ):
-                            # Use operator to send wheel event
-                            bpy.ops.wm.scroll_up() if direction == 'UP' else bpy.ops.wm.scroll_down()
+                        try:
+                            with context.temp_override(
+                                window=context.window,
+                                area=context.area,
+                                region=context.region
+                            ):
+                                # Use operator to send wheel event
+                                if direction == 'UP':
+                                    bpy.ops.wm.scroll_up()
+                                else:
+                                    bpy.ops.wm.scroll_down()
+                        except:
+                            pass
                     
                     self._last_sent_value = wheel_count
         
@@ -139,11 +148,15 @@ class HOUDINI_NUMPAD_OT_editor(bpy.types.Operator):
         
         if self._draw_handler:
             for area in context.screen.areas:
-                if area.type == 'PROPERTIES':
-                    try:
-                        area.spaces[0].draw_handler_remove(self._draw_handler, 'POST_PIXEL')
-                    except:
-                        pass
+                if area.type == 'VIEW_3D':
+                    for region in area.regions:
+                        if region.type == 'WINDOW':
+                            try:
+                                region.draw_handler_remove(self._draw_handler, 'WINDOW')
+                            except:
+                                pass
+                            break
+                    break
     
     def _draw_numpad_ui(self, context):
         """Draw the Houdini-style numpad panel"""
