@@ -19,6 +19,7 @@ class HOUDINI_NUMPAD_OT_editor(bpy.types.Operator):
     # Last mouse position for debouncing
     _last_sent_value = 0
     _timer = None
+    _field_activated = False
     
     def invoke(self, context, event):
         # Only work if mouse is over properties or UI
@@ -30,6 +31,7 @@ class HOUDINI_NUMPAD_OT_editor(bpy.types.Operator):
         self._selected_step_idx = -1
         self._is_selecting_step = True
         self._last_sent_value = 0
+        self._field_activated = False
         
         print("\n=== Houdini Numpad Editor Started ===")
         print("Move MOUSE UP/DOWN to select step size")
@@ -40,6 +42,17 @@ class HOUDINI_NUMPAD_OT_editor(bpy.types.Operator):
         wm = context.window_manager
         self._timer = wm.event_timer_add(0.016, window=context.window)
         wm.modal_handler_add(self)
+        
+        # Simulate LMB click to activate field editing
+        try:
+            with context.temp_override(
+                window=context.window,
+                area=context.area,
+                region=context.region
+            ):
+                bpy.ops.ui.copy_data_path_button(full_path=False)
+        except:
+            pass
         
         return {'RUNNING_MODAL'}
     
@@ -117,9 +130,9 @@ class HOUDINI_NUMPAD_OT_editor(bpy.types.Operator):
                                 region=context.region
                             ):
                                 if direction == 'UP':
-                                    bpy.ops.wm.scroll_up()
+                                    bpy.ops.ui.button_increment(mode='UP')
                                 else:
-                                    bpy.ops.wm.scroll_down()
+                                    bpy.ops.ui.button_increment(mode='DOWN')
                         except:
                             pass
                     
