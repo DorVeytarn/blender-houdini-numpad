@@ -8,7 +8,7 @@ def register():
     
     if kc:
         km = kc.keymaps.new(name="Window", space_type='EMPTY', region_type='WINDOW', modal=False)
-        kmi = km.keymap_items.new('wm.houdini_numpad_editor', 'MIDDLEMOUSE', 'PRESS')
+        kmi = km.keymap_items.new('wm.houdini_numpad_editor', 'MIDDLEMOUSE', 'PRESS', alt=True)
 
 
 def unregister():
